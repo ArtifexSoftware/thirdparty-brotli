@@ -16,6 +16,7 @@ import java.io.InputStream;
  */
 public class BrotliInputStream extends InputStream {
 
+  /** Default size of internal buffer (used for faster byte-by-byte reading). */
   public static final int DEFAULT_INTERNAL_BUFFER_SIZE = 256;
 
   /**
@@ -93,14 +94,17 @@ public class BrotliInputStream extends InputStream {
     }
   }
 
+  /** Attach "RAW" dictionary (chunk) to decoder. */
   public void attachDictionaryChunk(byte[] data) {
     Decode.attachDictionaryChunk(state, data);
   }
 
+  /** Request decoder to produce output as soon as it is available. */
   public void enableEagerOutput() {
     Decode.enableEagerOutput(state);
   }
 
+  /** Enable "large window" stream feature. */
   public void enableLargeWindow() {
     Decode.enableLargeWindow(state);
   }
@@ -111,6 +115,7 @@ public class BrotliInputStream extends InputStream {
   @Override
   public void close() throws IOException {
     Decode.close(state);
+    Utils.closeInput(state);
   }
 
   /**
@@ -134,6 +139,9 @@ public class BrotliInputStream extends InputStream {
    */
   @Override
   public int read(byte[] destBuffer, int destOffset, int destLen) throws IOException {
+    if (destBuffer == null) {
+      throw new NullPointerException("destBuffer is null");
+    }
     if (destOffset < 0) {
       throw new IllegalArgumentException("Bad offset: " + destOffset);
     } else if (destLen < 0) {
@@ -164,7 +172,7 @@ public class BrotliInputStream extends InputStream {
       copyLen += state.outputUsed;
       copyLen = (copyLen > 0) ? copyLen : END_OF_STREAM_MARKER;
       return copyLen;
-    } catch (BrotliRuntimeException ex) {
+    } catch (BrotliRuntimeException | IllegalStateException ex) {
       throw new IOException("Brotli stream decoding failed", ex);
     }
 
