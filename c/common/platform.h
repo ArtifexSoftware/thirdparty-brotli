@@ -616,11 +616,15 @@ BROTLI_UNUSED_FUNCTION void BrotliSuppressUnusedFunctions(void) {
   BROTLI_UNUSED(&BrotliDump);
 #endif
 
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_I86)) && \
+#if defined(_MSC_VER) && (_MSC_VER >= 1800) &&(defined(_M_X64) || defined(_M_I86)) && \
     !defined(_M_ARM64EC)
 /* _mm_prefetch() is not defined outside of x86/x64 */
 /* https://msdn.microsoft.com/fr-fr/library/84szxsww(v=vs.90).aspx */
+#if 0 && _MSC_VER >= 1800
 #include <mmintrin.h>
+#else
+#undef SUPPORTS_SSE2
+#endif
 #define PREFETCH_L1(ptr) _mm_prefetch((const char*)(ptr), _MM_HINT_T0)
 #define PREFETCH_L2(ptr) _mm_prefetch((const char*)(ptr), _MM_HINT_T1)
 #elif BROTLI_GNUC_HAS_BUILTIN(__builtin_prefetch, 3, 1, 0)
